@@ -41,7 +41,7 @@ public class JsonFileReader implements StepExecutionListener, ItemReader<JsonNod
     }
 
     @Override
-    public JsonNode read() throws Exception {
+    public synchronized JsonNode read() throws Exception {
         if (objectMapper == null)
             objectMapper = new ObjectMapper();
 
@@ -51,8 +51,9 @@ public class JsonFileReader implements StepExecutionListener, ItemReader<JsonNod
 
         String line = reader.readLine();
 
-        if (line != null)
-            return objectMapper.readTree(reader.readLine());
+        if (line != null) {
+            return objectMapper.readTree(line);
+        } 
         else
             return null;
     }

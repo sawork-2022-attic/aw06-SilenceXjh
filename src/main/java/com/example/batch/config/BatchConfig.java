@@ -4,6 +4,7 @@ import com.example.batch.model.Product;
 import com.example.batch.service.JsonFileReader;
 import com.example.batch.service.ProductProcessor;
 import com.example.batch.service.ProductWriter;
+import com.example.batch.web.PosController;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -14,6 +15,7 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
@@ -24,6 +26,8 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @EnableBatchProcessing
 public class BatchConfig {
 
+    @Autowired
+    public PosController controller;
 
     @Autowired
     public JobBuilderFactory jobBuilderFactory;
@@ -33,8 +37,13 @@ public class BatchConfig {
 
 
     @Bean
-    public ItemReader<JsonNode> itemReader() {
-        return new JsonFileReader("/home/java/meta_Clothing_Shoes_and_Jewelry.json");
+    public ItemReader<JsonNode> itemReader1() {
+        return new JsonFileReader("/Users/xjh/Downloads/meta_Luxury_Beauty.json");
+    }
+
+    @Bean
+    public ItemReader<JsonNode> itemReader2() {
+        return new JsonFileReader("/Users/xjh/Downloads/meta_Video_Games.json");
     }
 
     @Bean
@@ -48,8 +57,18 @@ public class BatchConfig {
     }
 
     @Bean
-    protected Step processProducts(ItemReader<JsonNode> reader, ItemProcessor<JsonNode, Product> processor, ItemWriter<Product> writer) {
-        return stepBuilderFactory.get("processProducts").<JsonNode, Product>chunk(20)
+    protected Step processProducts1(@Qualifier("itemReader1")ItemReader<JsonNode> reader, ItemProcessor<JsonNode, Product> processor, ItemWriter<Product> writer) {
+        return stepBuilderFactory.get("processProducts1").<JsonNode, Product>chunk(20)
+                .reader(reader)
+                .processor(processor)
+                .writer(writer)
+                .taskExecutor(taskExecutor())
+                .build();
+    }
+
+    @Bean
+    protected Step processProducts2(@Qualifier("itemReader2")ItemReader<JsonNode> reader, ItemProcessor<JsonNode, Product> processor, ItemWriter<Product> writer) {
+        return stepBuilderFactory.get("processProducts2").<JsonNode, Product>chunk(20)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
@@ -61,7 +80,8 @@ public class BatchConfig {
     public Job chunksJob() {
         return jobBuilderFactory
                 .get("chunksJob")
-                .start(processProducts(itemReader(), itemProcessor(), itemWriter()))
+                .start(processProducts1(itemReader1(), itemProcessor(), itemWriter()))
+                .next(processProducts2(itemReader2(), itemProcessor(), itemWriter()))
                 .build();
     }
 

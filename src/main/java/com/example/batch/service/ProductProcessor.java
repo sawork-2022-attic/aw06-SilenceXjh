@@ -24,6 +24,7 @@ public class ProductProcessor implements ItemProcessor<JsonNode, Product>, StepE
 
     @Override
     public Product process(JsonNode jsonNode) throws Exception {
+        
         return objectMapper.treeToValue(jsonNode, Product.class);
     }
 }
